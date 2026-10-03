@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Esotica — Scarica l'app</title>
+  <link rel="icon" href="assets/icon.png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F8F5F0;
+      color: #1C1C1C;
+      line-height: 1.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border: 1px solid #DDD8D0;
+      border-radius: 20px;
+      padding: 40px 28px;
+      text-align: center;
+    }
+    .icon {
+      width: 88px;
+      height: 88px;
+      border-radius: 22px;
+      margin: 0 auto 20px;
+      display: block;
+      box-shadow: 0 4px 16px rgba(138, 46, 99, 0.22);
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #8A2E63;
+      margin-bottom: 6px;
+    }
+    .tagline {
+      font-size: 15px;
+      color: #666;
+      margin-bottom: 28px;
+    }
+    .status {
+      font-size: 15px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-block;
+      background: #8A2E63;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 14px 28px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    .btn:active { opacity: 0.85; }
+    ul.features {
+      text-align: left;
+      list-style: none;
+      margin: 20px 0 8px;
+      padding: 16px 18px;
+      background: #F7E8F0;
+      border-radius: 12px;
+    }
+    ul.features li {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    ul.features li:last-child { margin-bottom: 0; }
+    .note {
+      font-size: 13px;
+      color: #A0A0A0;
+      margin-top: 16px;
+    }
+    a.mail {
+      color: #8A2E63;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img class="icon" src="assets/icon.png" alt="Esotica" />
+    <h1>Esotica</h1>
+    <p class="tagline">Le tue orchidee, curate bene 🌸</p>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    var PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.christianmagnani.esotica';
+    // Il codice del sito GoatCounter di Esotica (https://<codice>.goatcounter.com).
+    // Lo crea Christian nel suo account: finché è vuoto, il conteggio è spento e la
+    // pagina fa solo il reindirizzamento.
+    var GOATCOUNTER_CODICE = 'esotica';
+    var ua = navigator.userAgent || '';
+    var isIOS = /iPad|iPhone|iPod/.test(ua);
+    var isAndroid = /Android/.test(ua);
+    var content = document.getElementById('content');
+
+    // --- Conteggio scan per sistema operativo (GoatCounter, no cookie/no dati personali) ---
+    // Etichetta lo scan: /scan/android, /scan/ios oppure /scan/altro.
+    // La dashboard mostra quanti iPhone vs Android hanno scansionato la tessera.
+    var osLabel = isAndroid ? 'android' : (isIOS ? 'ios' : 'altro');
+
+    // Chi arriva dai social ha ?src=... nel link (pinterest, instagram): lo contiamo
+    // a parte come /social/<src>/<os>, così non si mescola con gli scan delle tessere.
+    // Le tessere non hanno parametro e restano /scan/<os>, come prima.
+    // Il try/catch garantisce che, anche su un browser vecchissimo, si ricada su
+    // /scan/ senza mai interrompere lo script.
+    var src = '';
+    try {
+      src = (new URLSearchParams(window.location.search).get('src') || '')
+        .toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+    } catch (e) { src = ''; }
+    var countPath = (src ? '/social/' + src + '/' : '/scan/') + osLabel;
+
+    // Il conteggio parte subito, senza aspettare di scaricare count.js da un altro
+    // server: con il 4G debole dentro un vivaio lo script poteva arrivare dopo il
+    // redirect e lo scan andava perso. Mandiamo gli stessi dati che manderebbe
+    // count.js, direttamente all'endpoint di GoatCounter.
+    // onSent viene chiamata una sola volta, quando è sicuro lasciare la pagina.
+    function countVisit(onSent) {
+      var done = false;
+      function finish() { if (!done) { done = true; if (onSent) onSent(); } }
+
+      // Come faceva count.js: le prove in locale non finiscono nelle statistiche.
+      if (!GOATCOUNTER_CODICE || !/^https?:$/.test(window.location.protocol) ||
+          /^(localhost|127\.|\[?::1\]?$)/.test(window.location.hostname)) {
+        finish();
+        return;
+      }
+
+      var data = {
+        p: countPath,
+        r: document.referrer,
+        t: document.title,
+        s: window.screen.width,
+        q: window.location.search,
+        b: navigator.webdriver ? 153 : 0,
+        rnd: Math.random().toString(36).slice(2, 7)  // anti-cache
+      };
+      var qs = [];
+      for (var k in data) {
+        if (data[k] !== '' && data[k] !== null && data[k] !== undefined)
+          qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(data[k]));
+      }
+      var url = 'https://' + GOATCOUNTER_CODICE + '.goatcounter.com/count?' + qs.join('&');
+
+      // sendBeacon: il browser consegna la richiesta anche dopo che la pagina è
+      // stata lasciata, quindi si può fare il redirect quasi subito.
+      try {
+        if (navigator.sendBeacon && navigator.sendBeacon(url)) {
+          setTimeout(finish, 300);
+          return;
+        }
+      } catch (e) {}
+
+      // Browser senza sendBeacon: pixel-immagine, e si aspetta la risposta
+      // (o l'errore, es. blocco pubblicità) prima di andare avanti.
+      var img = new Image();
+      img.onload = finish;
+      img.onerror = finish;
+      img.src = url;
+      setTimeout(finish, 1500);  // tetto massimo: mai lasciare l'utente fermo qui
+    }
+
+    if (isAndroid) {
+      content.innerHTML =
+        '<p class="status">Ti stiamo portando su Google Play…</p>' +
+        '<a class="btn" href="' + PLAY_STORE_URL + '">Apri su Google Play</a>';
+      // Redirect solo dopo che il conteggio è partito (max 1,5 s su rete lenta).
+      // Chi vuole può toccare subito il pulsante.
+      countVisit(function () { window.location.href = PLAY_STORE_URL; });
+    } else if (isIOS) {
+      content.innerHTML =
+        '<p class="status">📱 Stiamo lavorando alla versione per iPhone.<br>Torna a trovarci presto!</p>' +
+        '<ul class="features">' +
+          '<li>🔍 Ti dice quando controllarla, pianta per pianta</li>' +
+          '<li>💧 Come si annaffia un\'orchidea, passo passo</li>' +
+          '<li>🌸 Rifioritura guidata e diagnosi per sintomo</li>' +
+          '<li>🔒 Nessun account richiesto</li>' +
+        '</ul>' +
+        '<p class="note">Vuoi sapere quando arriva su iOS? Scrivici a<br>' +
+          '<a class="mail" href="mailto:magnani.christian.dev@gmail.com?subject=Esotica%20iOS">magnani.christian.dev@gmail.com</a></p>';
+      countVisit();
+    } else {
+      content.innerHTML =
+        '<p class="status">Esotica è disponibile su Android.</p>' +
+        '<a class="btn" href="' + PLAY_STORE_URL + '">Scarica su Google Play</a>' +
+        '<p class="note">📱 La versione per iPhone è in lavorazione.</p>';
+      countVisit();
+    }
+  </script>
+</body>
+</html>
